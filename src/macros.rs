@@ -1,13 +1,13 @@
 #[macro_export]
 macro_rules! process {
     ($task_name:expr, $messenger:expr, $task:expr) => {{
-        $messenger.send(&$task_name, crate::Status::Running, None);
+        $messenger.send(&$task_name, $crate::Status::Running, None);
 
         let result = $task;
 
         match result {
-            Ok(msg) => $messenger.send(&$task_name, crate::Status::Finished, msg),
-            Err(msg) => $messenger.send(&$task_name, crate::Status::Failed, msg),
+            Ok(msg) => $messenger.send(&$task_name, $crate::Status::Finished, msg),
+            Err(msg) => $messenger.send(&$task_name, $crate::Status::Failed, msg),
         }
     }};
 }
@@ -16,7 +16,7 @@ macro_rules! process {
 macro_rules! process_async {
     ($task_name:expr, $messenger:expr, $task:expr) => {{
         $messenger
-            .send_async(&$task_name, crate::Status::Running, None)
+            .send_async(&$task_name, $crate::Status::Running, None)
             .await;
 
         let result = $task.await;
@@ -24,12 +24,12 @@ macro_rules! process_async {
         match result {
             Ok(msg) => {
                 $messenger
-                    .send_async(&$task_name, crate::Status::Finished, msg)
+                    .send_async(&$task_name, $crate::Status::Finished, msg)
                     .await
             }
             Err(msg) => {
                 $messenger
-                    .send_async(&$task_name, crate::Status::Failed, msg)
+                    .send_async(&$task_name, $crate::Status::Failed, msg)
                     .await
             }
         }
