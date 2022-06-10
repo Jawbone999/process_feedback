@@ -1,27 +1,42 @@
 #[macro_use]
 mod macros;
 
+mod messenger;
+pub use messenger::{Messenger, MessengerAsync};
+
 mod status;
 pub use status::Status;
 
 #[cfg(test)]
 mod tests {
+    use async_trait::async_trait;
+
     use super::*;
 
-    fn message(task_name: &str, status: Status, message: Option<String>) {
-        println!("{task_name} {status:?} {message:?}");
+    struct Printer(&'static str);
+
+    impl Messenger for Printer {
+        fn send(&self, task_name: &str, status: Status, message: Option<String>) {
+            let name = self.0;
+            println!("{name}: {task_name} {status:?} {message:?}");
+        }
     }
 
-    async fn message_async(task_name: &str, status: Status, message: Option<String>) {
-        println!("{task_name} {status:?} {message:?}");
+    #[async_trait]
+    impl MessengerAsync for Printer {
+        async fn send_async(&self, task_name: &str, status: Status, message: Option<String>) {
+            let name = self.0;
+            println!("{name}: {task_name} {status:?} {message:?}");
+        }
     }
 
     #[test]
     fn nested() {
-        process!("Outer", message, {
+        let printer = Printer("Sync");
+        process!("Outer", printer, {
             println!("Outer Start");
             for i in 1..=3 {
-                process!(&format!("Inner {i}"), message, {
+                process!(&format!("Inner {i}"), Printer("Sync Inner"), {
                     Ok(Some(format!("{i}^2 == {}", i * i)))
                 });
             }
@@ -33,10 +48,10 @@ mod tests {
 
     #[tokio::test]
     async fn nested_async() {
-        process_async!("Outer Async", message_async, async {
+        process_async!("Outer Async", Printer("Async"), async {
             println!("Outer Async Start");
             for i in 1..=3 {
-                process_async!(&format!("Inner Async {i}"), message_async, async {
+                process_async!(&format!("Inner Async {i}"), Printer("Async Inner"), async {
                     Ok(Some(format!("{i}^2 == {}", i * i)))
                 });
             }
