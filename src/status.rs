@@ -12,7 +12,7 @@ pub enum Status {
     /// The task has completed successfully.
     Finished,
 
-    /// The task has failed.
+    /// The task has
     Failed,
 }
 

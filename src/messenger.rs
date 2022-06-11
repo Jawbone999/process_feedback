@@ -1,11 +1,13 @@
 use crate::Status;
-use async_trait::async_trait;
 
+#[cfg(feature = "sync")]
 pub trait Messenger {
     fn send(&self, task_name: &str, status: Status, message: Option<String>);
 }
 
-#[async_trait]
-pub trait MessengerAsync {
-    async fn send_async(&self, task_name: &str, status: Status, message: Option<String>);
+/// The MessengerAsync trait defines the interface for sending status updates.
+#[cfg(feature = "async")]
+#[async_trait::async_trait]
+pub trait AsyncMessenger {
+    async fn send(&self, task_name: &str, status: Status, message: Option<String>);
 }

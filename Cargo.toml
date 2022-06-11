@@ -3,9 +3,16 @@ name = "task_feedback"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+default = ["sync"]
+
+sync = []
+async = ["dep:async-trait", "dep:futures"]
+serde = ["dep:serde"]
+
 [dependencies]
-async-trait = "0.1.53"
-futures = "0.3.21"
+async-trait = { version = "0.1.53", optional = true }
+futures = { version = "0.3.21", optional = true }
 serde = { version = "1.0.137", features = ["derive"], optional = true }
 
 [dev-dependencies]
