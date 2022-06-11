@@ -1,63 +1,67 @@
-#[macro_use]
-mod macros;
-
 mod messenger;
 pub use messenger::{Messenger, MessengerAsync};
 
 mod status;
 pub use status::Status;
 
-#[cfg(test)]
-mod tests {
-    use async_trait::async_trait;
+use std::future::Future;
 
-    use super::*;
+// trait MyTrait: Future {
+//     type MyTraitOutput;
 
-    struct Printer(&'static str);
+//     fn duplicate<F>(self) -> F
+//     where
+//         F: Future<Output = Self::MyTraitOutput>;
+// }
 
-    impl Messenger for Printer {
-        fn send(&self, task_name: &str, status: Status, message: Option<String>) {
-            let name = self.0;
-            println!("{name}: {task_name} {status:?} {message:?}");
-        }
+// impl<Fut> MyTrait for Fut
+// where
+//     Fut: Future<Output = u8>,
+// {
+//     type MyTraitOutput = (u8, u8);
+
+//     fn duplicate<F>(self) -> F
+//     where
+//         F: Future<Output = Self::MyTraitOutput>,
+//     {
+//         async {
+//             let n = self.await;
+//             (n, n)
+//         }
+//     }
+// }
+
+fn duplicate<F>(fut: F) -> impl Future<Output = (F::Output, F::Output)>
+where
+    F: Future<Output = u8>,
+{
+    async {
+        let n = fut.await;
+        (n, n)
     }
+}
 
-    #[async_trait]
-    impl MessengerAsync for Printer {
-        async fn send_async(&self, task_name: &str, status: Status, message: Option<String>) {
-            let name = self.0;
-            println!("{name}: {task_name} {status:?} {message:?}");
-        }
-    }
+pub fn make_task<S, M, F, T, E>(
+    name: S,
+    messenger: M,
+    future: F,
+) -> impl Future<Output = Result<T, E>>
+where
+    S: AsRef<str>,
+    M: MessengerAsync,
+    F: Future<Output = (Result<T, E>, Option<String>)>,
+{
+    async move {
+        messenger
+            .send_async(name.as_ref(), Status::Running, None)
+            .await;
 
-    #[test]
-    fn nested() {
-        let printer = Printer("Sync");
-        process!("Outer", printer, {
-            println!("Outer Start");
-            for i in 1..=3 {
-                process!(&format!("Inner {i}"), Printer("Sync Inner"), {
-                    Ok(Some(format!("{i}^2 == {}", i * i)))
-                });
-            }
-            println!("Outer End");
+        let (result, msg) = future.await;
 
-            Ok(None)
-        });
-    }
+        let status = Status::from(&result);
 
-    #[tokio::test]
-    async fn nested_async() {
-        process_async!("Outer Async", Printer("Async"), async {
-            println!("Outer Async Start");
-            for i in 1..=3 {
-                process_async!(&format!("Inner Async {i}"), Printer("Async Inner"), async {
-                    Ok(Some(format!("{i}^2 == {}", i * i)))
-                });
-            }
-            println!("Outer Async End");
+        messenger.send_async(name.as_ref(), status, msg).await;
 
-            Ok(None)
-        });
+        result
     }
 }
