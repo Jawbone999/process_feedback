@@ -6,11 +6,14 @@ pub fn task<S, M, F, T, E>(name: S, messenger: &M, func: F) -> Result<T, E>
 where
     S: AsRef<str>,
     M: Messenger,
-    F: FnOnce() -> (Result<T, E>, Option<String>),
+    F: FnOnce() -> Result<(T, Option<String>), (E, Option<String>)>,
 {
     messenger.send(name.as_ref(), Status::Running, None);
 
-    let (result, msg) = func();
+    let (result, msg) = match func() {
+        Ok((value, msg)) => (Ok(value), msg),
+        Err((error, msg)) => (Err(error), msg),
+    };
 
     let status = Status::from(&result);
 
@@ -24,11 +27,14 @@ pub async fn async_task<S, M, F, T, E>(name: S, messenger: &M, future: F) -> Res
 where
     S: AsRef<str>,
     M: AsyncMessenger,
-    F: std::future::Future<Output = (Result<T, E>, Option<String>)>,
+    F: std::future::Future<Output = Result<(T, Option<String>), (E, Option<String>)>>,
 {
     messenger.send(name.as_ref(), Status::Running, None).await;
 
-    let (result, msg) = future.await;
+    let (result, msg) = match future.await {
+        Ok((value, msg)) => (Ok(value), msg),
+        Err((error, msg)) => (Err(error), msg),
+    };
 
     let status = Status::from(&result);
 
