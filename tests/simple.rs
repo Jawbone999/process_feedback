@@ -20,7 +20,7 @@ fn simple() {
     let printer = Printer("SimplePrinter".into());
     let computation = || {
         let sum = add(3, 4);
-        Ok::<_, Infallible>(sum).with_message(format!("sum = {sum}"))
+        Ok::<_, Infallible>(sum).with_msg(format!("sum = {sum}"))
     };
 
     let result = task("AddTask", &printer, computation);

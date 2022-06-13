@@ -1,4 +1,4 @@
-pub struct ResultFeedback<T, E>(pub Result<T, E>, pub Option<String>);
+pub type ResultFeedback<T, E> = Result<(T, Option<String>), (E, Option<String>)>;
 
 pub trait WithMessage<T, E> {
     fn with_msg<S: Into<String>>(self, message: S) -> ResultFeedback<T, E>;
@@ -8,10 +8,16 @@ pub trait WithMessage<T, E> {
 
 impl<T, E> WithMessage<T, E> for Result<T, E> {
     fn with_msg<S: Into<String>>(self, message: S) -> ResultFeedback<T, E> {
-        ResultFeedback(self, Some(message.into()))
+        match self {
+            Ok(value) => Ok((value, Some(message.into()))),
+            Err(error) => Err((error, Some(message.into()))),
+        }
     }
 
     fn no_msg(self) -> ResultFeedback<T, E> {
-        ResultFeedback(self, None)
+        match self {
+            Ok(value) => Ok((value, None)),
+            Err(error) => Err((error, None)),
+        }
     }
 }

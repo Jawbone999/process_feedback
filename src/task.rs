@@ -1,4 +1,4 @@
-use crate::messenger::*;
+use crate::messenger::{AsyncMessenger, Messenger};
 use crate::ResultFeedback;
 use crate::Status;
 
@@ -11,7 +11,10 @@ where
 {
     messenger.send(name.as_ref(), Status::Running, None);
 
-    let ResultFeedback(result, msg) = func();
+    let (result, msg) = match func() {
+        Ok((value, msg)) => (Ok(value), msg),
+        Err((error, msg)) => (Err(error), msg),
+    };
 
     let status = Status::from(&result);
 
@@ -29,7 +32,10 @@ where
 {
     messenger.send(name.as_ref(), Status::Running, None).await;
 
-    let ResultFeedback(result, msg) = future.await;
+    let (result, msg) = match future.await {
+        Ok((value, msg)) => (Ok(value), msg),
+        Err((error, msg)) => (Err(error), msg),
+    };
 
     let status = Status::from(&result);
 
