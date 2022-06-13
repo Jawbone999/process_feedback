@@ -6,6 +6,8 @@ pub trait WithMessage<T, E> {
     fn no_msg(self) -> ResultFeedback<T, E>;
 
     fn with_err_msg(self, message: impl Into<String>) -> Result<T, (E, Option<String>)>;
+
+    fn err_no_msg(self) -> Result<T, (E, Option<String>)>;
 }
 
 impl<T, E> WithMessage<T, E> for Result<T, E> {
@@ -27,6 +29,13 @@ impl<T, E> WithMessage<T, E> for Result<T, E> {
         match self {
             Ok(value) => Ok(value),
             Err(error) => Err((error, Some(message.into()))),
+        }
+    }
+
+    fn err_no_msg(self) -> Result<T, (E, Option<String>)> {
+        match self {
+            Ok(value) => Ok(value),
+            Err(error) => Err((error, None)),
         }
     }
 }
