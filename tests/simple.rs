@@ -1,4 +1,6 @@
-use task_feedback::{async_task, task, AsyncMessenger, Messenger};
+use std::convert::Infallible;
+
+use task_feedback::{async_task, task, AsyncMessenger, Messenger, WithMessage};
 
 struct Printer(String);
 
@@ -18,7 +20,7 @@ fn simple() {
     let printer = Printer("SimplePrinter".into());
     let computation = || {
         let sum = add(3, 4);
-        (Ok::<u8, ()>(sum), Some("sum = 7".into()))
+        Ok::<_, Infallible>(sum).with_message(format!("sum = {sum}"))
     };
 
     let result = task("AddTask", &printer, computation);
