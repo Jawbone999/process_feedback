@@ -3,7 +3,13 @@ use crate::ResultFeedback;
 use crate::Status;
 
 #[cfg(feature = "sync")]
-pub fn task<S, M, F, T, E>(name: S, message: Option<String>, messenger: &M, func: F) -> Result<T, E>
+pub fn task<S, M, F, T, E>(
+    name: S,
+    message: Option<String>,
+    messenger: &M,
+    finishes: bool,
+    func: F,
+) -> Result<T, E>
 where
     S: AsRef<str>,
     M: Messenger,
@@ -16,7 +22,11 @@ where
         Err((error, msg)) => (Err(error), msg),
     };
 
-    let status = Status::from(&result);
+    let mut status = Status::from(&result);
+
+    if !finishes && matches!(status, Status::Finished) {
+        status = Status::Running;
+    }
 
     messenger.send(name.as_ref(), status, msg);
 
@@ -28,6 +38,7 @@ pub async fn async_task<S, M, F, T, E>(
     name: S,
     message: Option<String>,
     messenger: &M,
+    finishes: bool,
     future: F,
 ) -> Result<T, E>
 where
@@ -44,7 +55,11 @@ where
         Err((error, msg)) => (Err(error), msg),
     };
 
-    let status = Status::from(&result);
+    let mut status = Status::from(&result);
+
+    if !finishes && matches!(status, Status::Finished) {
+        status = Status::Running;
+    }
 
     messenger.send(name.as_ref(), status, msg).await;
 
