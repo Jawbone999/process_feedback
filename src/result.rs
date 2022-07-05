@@ -8,6 +8,8 @@ pub trait WithMessage<T, E> {
     fn with_err_msg(self, message: impl Into<String>) -> Result<T, (E, Option<String>)>;
 
     fn no_err_msg(self) -> Result<T, (E, Option<String>)>;
+
+    // fn emit_msg(self: Result<(T, String), E>) -> Result<T, E>;
 }
 
 impl<T, E> WithMessage<T, E> for Result<T, E> {
