@@ -1,6 +1,8 @@
 use crate::messenger::{AsyncMessenger, Messenger};
 use crate::ResultFeedback;
 use crate::Status;
+use std::fmt::Debug;
+use tracing::warn;
 
 #[cfg(feature = "sync")]
 pub fn task<S, M, F, T, E>(
@@ -14,12 +16,16 @@ where
     S: AsRef<str>,
     M: Messenger,
     F: FnOnce() -> ResultFeedback<T, E>,
+    E: std::fmt::Debug,
 {
     messenger.send(name.as_ref(), Status::Running, message);
 
     let (result, msg) = match func() {
         Ok((value, msg)) => (Ok(value), msg),
-        Err((error, msg)) => (Err(error), msg),
+        Err((error, msg)) => {
+            warn!("{error:?}");
+            (Err(error), msg)
+        }
     };
 
     let mut status = Status::from(&result);
@@ -45,6 +51,7 @@ where
     S: AsRef<str>,
     M: AsyncMessenger,
     F: std::future::Future<Output = ResultFeedback<T, E>>,
+    E: Debug,
 {
     messenger
         .send(name.as_ref(), Status::Running, message)
@@ -52,7 +59,10 @@ where
 
     let (result, msg) = match future.await {
         Ok((value, msg)) => (Ok(value), msg),
-        Err((error, msg)) => (Err(error), msg),
+        Err((error, msg)) => {
+            warn!("{error:?}");
+            (Err(error), msg)
+        }
     };
 
     let mut status = Status::from(&result);

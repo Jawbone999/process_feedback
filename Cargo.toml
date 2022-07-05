@@ -14,6 +14,7 @@ serde = ["dep:serde"]
 async-trait = { version = "0.1.53", optional = true }
 futures = { version = "0.3.21", optional = true }
 serde = { version = "1.0.137", features = ["derive"], optional = true }
+tracing = "0.1.35"
 
 [dev-dependencies]
 tokio = { version = "1.18.2", features = ["full"] }
