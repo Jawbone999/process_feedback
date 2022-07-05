@@ -1,7 +1,7 @@
 use crate::messenger::{AsyncMessenger, Messenger};
 use crate::ResultFeedback;
 use crate::Status;
-use std::error::Error;
+use std::fmt::Display;
 
 #[cfg(feature = "sync")]
 pub fn task<S, M, F, T, E>(
@@ -15,7 +15,7 @@ where
     S: AsRef<str>,
     M: Messenger,
     F: FnOnce() -> ResultFeedback<T, E>,
-    E: Error,
+    E: Display,
 {
     messenger.send(name.as_ref(), Status::Running, message);
 
@@ -51,7 +51,7 @@ where
     S: AsRef<str>,
     M: AsyncMessenger,
     F: std::future::Future<Output = ResultFeedback<T, E>>,
-    E: Error,
+    E: Display,
 {
     messenger
         .send(name.as_ref(), Status::Running, message)
