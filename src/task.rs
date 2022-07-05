@@ -9,7 +9,6 @@ pub fn task<S, M, F, T, E>(
     message: Option<String>,
     messenger: &M,
     finishes: bool,
-    show_error: bool,
     func: F,
 ) -> Result<T, E>
 where
@@ -22,14 +21,11 @@ where
 
     let (result, msg) = match func() {
         Ok((value, msg)) => (Ok(value), msg),
-        Err((error, msg)) => match show_error {
-            true => {
-                let msg = msg.unwrap_or_default();
-                let msg = format!("{msg} {error}").trim().to_owned();
-                (Err(error), Some(msg))
-            }
-            false => (Err(error), msg),
-        },
+        Err((error, msg)) => {
+            let msg = msg.unwrap_or_default();
+            let msg = format!("{msg} {error}").trim().to_owned();
+            (Err(error), Some(msg))
+        }
     };
 
     let mut status = Status::from(&result);
@@ -49,7 +45,6 @@ pub async fn async_task<S, M, F, T, E>(
     message: Option<String>,
     messenger: &M,
     finishes: bool,
-    show_error: bool,
     future: F,
 ) -> Result<T, E>
 where
@@ -64,14 +59,11 @@ where
 
     let (result, msg) = match future.await {
         Ok((value, msg)) => (Ok(value), msg),
-        Err((error, msg)) => match show_error {
-            true => {
-                let msg = msg.unwrap_or_default();
-                let msg = format!("{msg} {error}").trim().to_owned();
-                (Err(error), Some(msg))
-            }
-            false => (Err(error), msg),
-        },
+        Err((error, msg)) => {
+            let msg = msg.unwrap_or_default();
+            let msg = format!("{msg} {error}").trim().to_owned();
+            (Err(error), Some(msg))
+        }
     };
 
     let mut status = Status::from(&result);
